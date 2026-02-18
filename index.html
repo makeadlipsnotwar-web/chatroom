@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FluxChat</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        #chat-box { flex: 1; overflow-y: scroll; border: 1px solid #ccc; margin: 10px; padding: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="auth-ui">
+        <input id="user" placeholder="Name"> <input id="pass" type="password" placeholder="Passwort">
+        <button onclick="auth()">Login / Register</button>
+    </div>
+
+    <div id="room-ui" class="hidden">
+        <input id="room-name" placeholder="Raum Name"> <input id="room-pass" placeholder="Raum PW (optional)">
+        <button onclick="join()">Raum beitreten/erstellen</button>
+    </div>
+
+    <div id="chat-ui" class="hidden">
+        <div id="chat-box"></div>
+        <input id="msg"> <button onclick="send()">Senden</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        function auth() { socket.emit('auth', { username: document.getElementById('user').value, password: document.getElementById('pass').value }); }
+        function join() { socket.emit('join_room', { roomName: document.getElementById('room-name').value, roomPass: document.getElementById('room-pass').value }); }
+        function send() { socket.emit('chat_msg', document.getElementById('msg').value); document.getElementById('msg').value = ''; }
+
+        socket.on('auth_success', () => { document.getElementById('auth-ui').classList.add('hidden'); document.getElementById('room-ui').classList.remove('hidden'); });
+        socket.on('joined', () => { document.getElementById('room-ui').classList.add('hidden'); document.getElementById('chat-ui').classList.remove('hidden'); });
+        socket.on('msg_rcv', (data) => { document.getElementById('chat-box').innerHTML += `<p><b>${data.user}:</b> ${data.text}</p>`; });
+        socket.on('error_msg', (msg) => alert(msg));
+    </script>
+</body>
+</html>
